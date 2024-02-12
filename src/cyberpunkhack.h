@@ -26,12 +26,6 @@ typedef struct{
     int col;
 } strMatrix;
 
-/* Definisi tipe data stack */
-typedef struct{
-    char **buffer;
-    int top;
-} strStack;
-
 /* Definisi tipe data point */
 typedef struct{
     int X;
@@ -58,10 +52,6 @@ void createStringMatrix(strMatrix *Mat, int height, int width);
 /* I.S. sembarang */
 /* F.S. terbentuk dynamic matrix of string Mat dengan baris height dan kolom width */
 
-void createStack(strStack *Stack, int capacity);
-/* I.S. sembarang */
-/* F.S. terbentuk stack of string Stack dengan ukuran capacity */
-
 void createPoint(point *P, int X, int Y);
 /* I.S. sembarang */
 /* F.S. terbentuk point P dengan koordinat (X, Y) */
@@ -79,14 +69,6 @@ void insertLastPointArr(pointArray *Arr, int X, int Y);
 /* I.S. pointArray Arr terdefinisi, X dan Y integer */
 /* F.S. titik (X, Y) ditambahkan sebagai elemen terakhir Arr */
 
-void push(strStack *Stack, char *str);
-/* I.S. strStack Stack terdefinisi, mungkin kosong */
-/* F.S. menambahkan str sebagai top dari stack of string Stack */
-
-void pop(strStack *Stack, char *str);
-/* I.S. strStack Stack terdefinisi, tidak kosong */
-/* F.S. string str dihapus dari stack of string Stack*/
-
 void displayArray(strArray Arr);
 /* I.S. strArray Arr terdefinisi, mungkin kosong */
 /* F.S. tampil pada layar strArray Arr */
@@ -95,9 +77,17 @@ void displayMatrix(strMatrix Mat);
 /* I.S. strMatrix Mat terdefinisi, mungkin kosong */
 /* F.S. tampil pada layar strMatrix Mat */
 
+void displayPointArray(pointArray Arr);
+/* I.S. pointArray Arr terdefinisi, mungkin kosong */
+/* F.S. tampil pada layar pointArray Arr */
+
 void displaySeqAndReward(strMatrix Mat, intArray Seq, intArray Reward);
 /* I.S. strMatrix Mat, intArray Seq, dan intArray Reward terdefinisi */
 /* F.S. tampil pada layar daftar sequence dan rewardnya */
+
+void copyPointArray(pointArray Arr1, pointArray *Arr2);
+/* I.S. pointArray Arr1 terdefinisi */
+/* F.S. pointArray Arr1 di-copy ke pointArray Arr2 */
 
 boolean isInStrArray(strArray Arr, char *Str);
 /* mengembalikan true jika string Str ada di strArray Arr, false jika tidak */
@@ -107,5 +97,12 @@ boolean isSequenceDup(strMatrix Mat, intArray Seq, strArray temp, int tempLen, i
 
 boolean isInPointArray(pointArray Arr, int X, int Y);
 /* mengembalikan true jika koordinat (X, Y) sudah berada pada pointArray Arr, false jika tidak */
+
+int addReward(strMatrix Mat, intArray Seq, intArray Reward, pointArray Arr, strMatrix tokenMat);
+/* mengembalikan reward yang bersesuaian jika terdapat sequence strMatrix Mat pada jalur yang disimpan di pointArray Arr*/
+
+void recursiveTraverse(strMatrix seqMat, intArray Seq, intArray Reward, pointArray *Arr, strMatrix tokenMat, int *maxReward, pointArray *maxArr, int currX, int currY, boolean vertical);
+/* I.S. strMatrix seqMat, intArray Seq, intArray Reward, pointArray Arr, strMatrix tokenMat, int maxReward, pointArray maxArr, int currX, int currY, boolean vertical terdefinisi */
+/* F.S. int maxReward menyimpan reward maksimal dan pointArray maxArr menyimpan rutenya */
 
 #endif

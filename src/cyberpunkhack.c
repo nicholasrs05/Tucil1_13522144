@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <time.h>
 #include "cyberpunkhack.h"
 
 /* --- Realisasi Fungsi dan Prosedur --- */
@@ -32,14 +31,6 @@ void createStringMatrix(strMatrix *Mat, int height, int width){
     }
     (*Mat).row = height;
     (*Mat).col = width;
-}
-
-void createStack(strStack *Stack, int capacity){
-    /* KAMUS LOKAL */
-
-    /* ALGORITMA */
-    (*Stack).buffer = (char**) malloc (capacity * sizeof(char*));
-    (*Stack).top = -1;
 }
 
 void createPoint(point *P, int X, int Y){
@@ -83,22 +74,6 @@ void insertLastPointArr(pointArray *Arr, int X, int Y){
     }
 }
 
-void push(strStack *Stack, char *str){
-    /* KAMUS LOKAL */
-
-    /* ALGORITMA */
-    (*Stack).top++;
-    (*Stack).buffer[(*Stack).top] = (char*) malloc (100 * sizeof(char));
-    strcpy((*Stack).buffer[(*Stack).top], str);
-}
-
-void pop(strStack *Stack, char *str){
-    /* KAMUS LOKAL */
-
-    /* ALGORITMA */
-    (*Stack).top--;
-}
-
 void displayArray(strArray Arr){
     /* KAMUS LOKAL */
     int i;
@@ -123,6 +98,17 @@ void displayMatrix(strMatrix Mat){
     }
 }
 
+void displayPointArray(pointArray Arr){
+    /* KAMUS LOKAL */
+    int i;
+
+    /* ALGORITMA */
+    for (i = 0; i < Arr.nEff; i++){
+        printf("(%d, %d) ", Arr.buffer[i].X, Arr.buffer[i].Y);
+    }
+    printf("\n");
+}
+
 void displaySeqAndReward(strMatrix Mat, intArray Seq, intArray Reward){
     /* KAMUS LOKAL */
     int i, j;
@@ -133,8 +119,20 @@ void displaySeqAndReward(strMatrix Mat, intArray Seq, intArray Reward){
         for (j = 0; j < Seq.buffer[i]; j++){
             printf("%s ", Mat.buffer[i].buffer[j]);
         }
-        printf("dengan reward: %d\n", Reward.buffer[i]);
+        printf("dengan reward %d dan panjang %d\n", Reward.buffer[i], Seq.buffer[i]);
     }
+}
+
+void copyPointArray(pointArray Arr1, pointArray *Arr2){
+    /* KAMUS LOKAL */
+    int i;
+
+    /* ALGORITMA */
+    createPointArray(Arr2, Arr1.maxLen);
+    for (i = 0; i < Arr1.nEff; i++){
+        (*Arr2).buffer[i] = Arr1.buffer[i];
+    }
+    (*Arr2).nEff = Arr1.nEff;
 }
 
 boolean isInStrArray(strArray Arr, char *Str){
@@ -197,73 +195,78 @@ boolean isInPointArray(pointArray Arr, int X, int Y){
     }
 }
 
-/* --- Dummy Driver --- */
-// int main(){
-//     strArray ArrayString;
-//     strMatrix MatrixString;
-//     strStack StackString;
-//     point P;
-//     pointArray ArrayPoint;
-//     char word[100];
-//     int i, j, arrLen, matRow, matCol, stackCap, random;
-//     arrLen = 3;
-//     matRow = 2; 
-//     matCol = 2;
-//     stackCap = 10;
-//     createStringArray(&ArrayString, arrLen);
-//     createStringMatrix(&MatrixString, matRow, matCol);
-//     createStack(&StackString, stackCap);
-//     for (i = 0; i < 2; i++){
-//         scanf("%s", word);
-//         insertLastStrArr(&ArrayString, word);
-//     }
-//     for (i = 0; i < 2; i++){
-//         printf("%s\n", ArrayString.buffer[i]);
-//     }
-//     MatrixString.buffer[0] = ArrayString;
-//     ArrayString.buffer[0] = "A";
-//     ArrayString.buffer[1] = "B";
-//     MatrixString.buffer[1] = ArrayString;
-//     for (i = 0; i < matRow; i++){
-//         for (j = 0; j < matCol; j++){
-//             printf("%s ", MatrixString.buffer[i].buffer[j]);
-//         }
-//         printf("\n");
-//     }
-//     for (i = 0; i < 2; i++){
-//         scanf("%s", word);
-//         push(&StackString, word);
-//     }
-//     for (i = 0; i < 2; i++){
-//         printf("%s\n", StackString.buffer[i]);
-//     }
-//     printf("%s\n", StackString.buffer[StackString.top]);
-//     pop(&StackString, word);
-//     printf("%s\n", StackString.buffer[StackString.top]);
+int addReward(strMatrix Mat, intArray Seq, intArray Reward, pointArray Arr, strMatrix tokenMat){
+    /* KAMUS LOKAL */
+    int i, j, k, reward;
+    boolean equal, used;
 
-//     srand(time(NULL));
-//     random = rand();
-//     printf("%d\n", (random % 6) + 1);
+    /* ALGORITMA */
+    reward = 0;
+    for (i = 0; i < Mat.row; i++){ // loop setiap sequence
+        used = false;
+        if (Seq.buffer[i] <= Arr.nEff){ // jika panjang jalur saat ini lebih besar atau sama dengan dibanding sequence saat ini, akan dicek kesamaan
+            for (j = 0; j < (Arr.nEff - Seq.buffer[i]) + 1; j++){ // loop sequence untuk menemukan kesamaan
+                equal = false;
+                for (k = 0; k < Seq.buffer[i]; k++){ // menyamakan tiap elemen
+                    if (tokenMat.buffer[Arr.buffer[j + k].X].buffer[Arr.buffer[j + k].Y] == Mat.buffer[i].buffer[k]){
+                        equal = true;
+                    } else {
+                        equal = false;
+                        break;
+                    }
+                }
+                if ((equal) && (!used)){ // jika ada sequence yang sama dan belum terpakai, tambahkan reward
+                    reward += Reward.buffer[i];
+                    used = true;
+                }
+            }
+        }
+    }
+    return reward;
+}
 
-//     createStringMatrix(&MatrixString, matRow, matCol);
-//     for (i = 0; i < matRow; i++){
-//         for (j = 0; j < matCol; j++){
-//             scanf("%s", word);
-//             insertLastStrArr(&MatrixString.buffer[i], word);
-//         }
-//     }
-//     displayMatrix(MatrixString);
+void recursiveTraverse(strMatrix seqMat, intArray Seq, intArray Reward, pointArray *Arr, strMatrix tokenMat, int *maxReward, pointArray *maxArr, int currX, int currY, boolean vertical){
+    /* KAMUS LOKAL */
+    int currReward, i;
 
-//     createPointArray(&ArrayPoint, arrLen);
-//     ArrayPoint.buffer[0].X = 1;
-//     ArrayPoint.buffer[0].Y = 2;
-//     ArrayPoint.buffer[1].X = 3;
-//     ArrayPoint.buffer[1].Y = 4;
-//     ArrayPoint.buffer[2].X = 5;
-//     ArrayPoint.buffer[2].Y = 6;
-//     printf("%d %d\n", ArrayPoint.buffer[0].X, ArrayPoint.buffer[0].Y);
-//     printf("%d %d\n", ArrayPoint.buffer[1].X, ArrayPoint.buffer[1].Y);
-//     printf("%d %d\n", ArrayPoint.buffer[2].X, ArrayPoint.buffer[2].Y);
-
-//     return 0;
-// }
+    /* ALGORITMA */
+    if ((*Arr).nEff == (*Arr).maxLen){ // Basis
+        currReward = addReward(seqMat, Seq, Reward, *Arr, tokenMat);
+        if (currReward > *maxReward){
+            // printf("Rute saat ini: "); displayPointArray(*Arr);
+            // printf("Solusi baru dengan reward %d\n", currReward);
+            *maxReward = currReward;
+            copyPointArray(*Arr, maxArr);
+        }
+    } else { // Rekurens
+        if (vertical){
+            for (i = 0; i < tokenMat.row; i++){
+                if (!isInPointArray(*Arr, i, currY)){
+                    insertLastPointArr(Arr, i, currY);
+                    if (addReward(seqMat, Seq, Reward, *Arr, tokenMat) > *maxReward){
+                        // printf("Rute saat ini: "); displayPointArray(*Arr);
+                        // printf("Rute ini rewardnya %d\n", addReward(seqMat, Seq, Reward, *Arr, tokenMat));
+                        *maxReward = addReward(seqMat, Seq, Reward, *Arr, tokenMat);
+                        copyPointArray(*Arr, maxArr);
+                    }
+                    recursiveTraverse(seqMat, Seq, Reward, Arr, tokenMat, maxReward, maxArr, i, currY, !vertical);
+                    (*Arr).nEff--;
+                }
+            }
+        } else {
+            for (i = 0; i < tokenMat.col; i++){
+                if (!isInPointArray(*Arr, currX, i)){
+                    insertLastPointArr(Arr, currX, i);
+                    if (addReward(seqMat, Seq, Reward, *Arr, tokenMat) > *maxReward){
+                        // printf("Rute saat ini: "); displayPointArray(*Arr);
+                        // printf("Rute ini rewardnya %d\n", addReward(seqMat, Seq, Reward, *Arr, tokenMat));
+                        *maxReward = addReward(seqMat, Seq, Reward, *Arr, tokenMat);
+                        copyPointArray(*Arr, maxArr);
+                    }
+                    recursiveTraverse(seqMat, Seq, Reward, Arr, tokenMat, maxReward, maxArr, currX, i, !vertical);
+                    (*Arr).nEff--;
+                }
+            }
+        }
+    }
+}

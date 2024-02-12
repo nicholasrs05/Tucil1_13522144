@@ -15,7 +15,9 @@ Program ini merupakan program yang dibuat untuk mencari solusi optimal salah sat
    git clone https://github.com/nicholasrs05/Tucil1_13522144.git
    ```
 2. Buka folder "bin" lalu buka file "main.exe"
-3. Apabila ini melakukan compile file .c, install terlebih dahulu GCC (GNU Compiler Collection). Setelah itu, buka terminal pada folder tempat Anda menyimpan repository lalu masukkan perintah berikut. Setelah itu, kembali ke langkah 2
+3. Apabila ingin melakukan compile file .c, install terlebih dahulu GCC (GNU Compiler Collection). Setelah itu, buka terminal pada folder tempat Anda menyimpan repository lalu masukkan perintah berikut. Setelah itu, kembali ke langkah 2
    ```sh
    gcc -o bin/main.exe src/main.c
-   ``` 
+   ```
+4. Jika ingin membaca input dari file, pastikan file berada pada folder "test"
+5. Jika ingin menyimpan hasil eksekusi program, file akan berada pada folder "test"

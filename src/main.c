@@ -1,15 +1,20 @@
+#include <time.h>
 #include "cyberpunkhack.c"
 
 /* --- Program Utama --- */
 int main(){
     /* KAMUS */
-    int i, j, k, bufferSize, mtxHeight, mtxWidth, cntSeq, option, cntToken, maxSeqSize, randomInt, reward, tempSeqLength, maxReward, currReward;
-    char Word[100];
+    int i, j, k, bufferSize, mtxHeight, mtxWidth, cntSeq, option, cntToken, maxSeqSize, randomInt, reward, tempSeqLength, maxReward, currReward, maxPossible;
+    char Word[100], fileName[200], line[100], filePath[200];
+    char *token;
     intArray seqSize, seqReward;
     strArray seqArray, bufferSolution;
     strMatrix sequences, tokenMatrix;
-    pointArray solutionCoordinate;
-    boolean valid, vertical, horizontal;
+    pointArray solutionCoordinate, maxArr;
+    boolean valid;
+    clock_t start, end;
+    double interval;
+    FILE *filePointer;
 
     /* ALGORITMA PROGRAM UTAMA */
     printf("Cyberpunk 2077 Breach Protocol Solver with Brute Force Algorithm\n\n");
@@ -31,7 +36,61 @@ int main(){
 
     if (option == 1){ //  Jika input dari file
         printf("Masukan Anda adalah dari file\n");
-        // something
+
+        // input nama file
+        valid = false;
+        while (!valid){
+            printf("Silakan masukkan nama file yang ingin Anda buka (maksimal 200 karakter)\n");
+            printf(">> "); scanf("%199s", fileName);
+            
+            sprintf(filePath, "../test/%s", fileName);
+            filePointer = fopen(filePath, "r");
+            if (filePointer == NULL){
+                printf("File tidak ditemukan! Silakan masukkan nama file yang benar!\n");
+            } else {
+                valid = true;
+            }
+        }
+
+        // membaca input dari file
+        fscanf(filePointer, "%d", &bufferSize);
+
+        fscanf(filePointer, "%d %d", &mtxHeight, &mtxWidth);
+
+        createStringMatrix(&tokenMatrix, mtxHeight, mtxWidth);
+        for (i = 0; i < mtxHeight; i++){
+            for (j = 0; j < mtxWidth; j++){
+                fscanf(filePointer, "%s", Word);
+                tokenMatrix.buffer[i].buffer[j] = strdup(Word);
+            }
+        }
+
+        fscanf(filePointer, "%d", &cntSeq);
+
+        createStringMatrix(&sequences, cntSeq, mtxWidth);
+        createIntArray(&seqSize, cntSeq);
+        createIntArray(&seqReward, cntSeq);
+        for (i = 0; i < cntSeq; i++){
+            fgets(line, sizeof(line), filePointer);
+            token = strtok(line, " \t\n");
+            j = 0;
+            while (token != NULL) {
+                sequences.buffer[i].buffer[j] = strdup(token);
+                j++;
+                token = strtok(NULL, " \t\n");
+            }
+            seqSize.buffer[i] = j;
+            fscanf(filePointer, "%d", &seqReward.buffer[i]);
+        }
+
+        fclose(filePointer);
+
+        printf("\nBerikut merupakan matrix sequence dari file\n");
+        displayMatrix(tokenMatrix);
+
+        printf("\nBerikut merupakan sequence unik dan reward random\n");
+        displaySeqAndReward(sequences, seqSize, seqReward);
+        printf("\n");
 
     } else { //  Jika input dari CLI (setelah validasi, hanya mungkin option == 2)
         printf("Masukan Anda adalah dari CLI\n");
@@ -79,7 +138,7 @@ int main(){
         displayMatrix(tokenMatrix);
 
         // membuat random sequence
-        createStringMatrix(&sequences, cntSeq, maxSeqSize + 2);
+        createStringMatrix(&sequences, cntSeq, maxSeqSize);
         createIntArray(&seqSize, cntSeq);
         createIntArray(&seqReward, cntSeq);
         for (i = 0; i < cntSeq; i++){
@@ -113,27 +172,40 @@ int main(){
         printf("\n");
     }
 
+    // time keeper
+    start = clock();
+
     // algoritma brute force untuk mencari solusi optimal
-    vertical = true;
-    horizontal = false;
+    currReward = 0;
     createStringArray(&bufferSolution, bufferSize);
     createPointArray(&solutionCoordinate, bufferSize);
     for (i = 0; i < tokenMatrix.col; i++){
-        insertLastPointArr(&solutionCoordinate, 0, i);
-        // [PENTING] cek ada di sequences atau engga [PENTING]
-
-        while (solutionCoordinate.nEff <= solutionCoordinate.maxLen){
-            if (vertical){
-                for (j = 0; j < tokenMatrix.row; j++){
-                    
-                }
-            } else {
-                // something
-            }
-
-            // [PENTING] cek ada di sequences atau engga [PENTING]
-        }
+        solutionCoordinate.buffer[0].X = 0;
+        solutionCoordinate.buffer[0].Y = i;
+        solutionCoordinate.nEff = 1;
+        currReward = addReward(sequences, seqSize, seqReward, solutionCoordinate, tokenMatrix);
+        maxReward = currReward;
+        recursiveTraverse(sequences, seqSize, seqReward, &solutionCoordinate, tokenMatrix, &maxReward, &maxArr, 0, i, true);
     }
+
+    // time keeper
+    end = clock();
+    interval = ((double)(end - start) / CLOCKS_PER_SEC) * 1000;
+
+    if (maxReward <= 0){
+        printf("Tidak ada solusi!\n");
+    } else {
+        printf("%d\n", maxReward);
+        for (i = 0; i < maxArr.nEff; i++){
+            printf("%s ", tokenMatrix.buffer[maxArr.buffer[i].X].buffer[maxArr.buffer[i].Y]);
+        }
+        printf("\n");
+        for (i = 0; i < maxArr.nEff; i++){
+            printf("%d, %d\n", maxArr.buffer[i].Y + 1, maxArr.buffer[i].X + 1);
+        }
+        printf("\n");
+    }
+    printf("%f ms\n", interval);
 
     // menyimpan hasil ke dalam file
     printf("Apakah Anda ingin menyimpan solusi ke dalam file .txt?\n");
@@ -149,6 +221,29 @@ int main(){
         } else {
             printf("Masukan tidak valid!\n");
         }
+    }
+    if (option == 1){
+        printf("Masukkan nama file yang diinginkan (maksimal 200 karakter)\n");
+        printf(">> "); scanf("%199s", fileName);
+
+        sprintf(filePath, "../test/%s", fileName);
+        filePointer = fopen(filePath, "w");
+        fprintf(filePointer, "%d\n", maxReward);
+
+        for (i = 0; i < maxArr.nEff; i++){
+            fprintf(filePointer, "%s ", tokenMatrix.buffer[maxArr.buffer[i].X].buffer[maxArr.buffer[i].Y]);
+        }
+
+        fprintf(filePointer, "\n");
+
+        for (i = 0; i < maxArr.nEff; i++){
+            fprintf(filePointer, "%d, %d\n", maxArr.buffer[i].Y + 1, maxArr.buffer[i].X + 1);
+        }
+
+        fprintf(filePointer, "\n");
+        fprintf(filePointer, "%f ms\n", interval);
+
+        fclose(filePointer);
     }
 
     return 0;
