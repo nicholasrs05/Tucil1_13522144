@@ -1,23 +1,31 @@
 #include <stdlib.h>
 #include <time.h>
 #include "cyberpunkhack.h"
-#include "boolean.h"
 
 /* --- Realisasi Fungsi dan Prosedur --- */
 void createIntArray(intArray *Arr, int length){
+    /* KAMUS LOKAL */
+
+    /* ALGORITMA */
     (*Arr).buffer = (int*) malloc (length * sizeof(int));
     (*Arr).nEff = 0;
     (*Arr).maxLen = length;
 }
 
 void createStringArray(strArray *Arr, int length){
+    /* KAMUS LOKAL */
+
+    /* ALGORITMA */
     (*Arr).buffer = (char**) malloc (length * sizeof(char*));
     (*Arr).nEff = 0;
     (*Arr).maxLen = length;
 }
 
 void createStringMatrix(strMatrix *Mat, int height, int width){
+    /* KAMUS LOKAL */
     int i;
+
+    /* ALGORITMA */
     (*Mat).buffer = (strArray*) malloc (height * sizeof(strArray));
     for (i = 0; i < height; i++){
         createStringArray(&(*Mat).buffer[i], width);
@@ -27,22 +35,34 @@ void createStringMatrix(strMatrix *Mat, int height, int width){
 }
 
 void createStack(strStack *Stack, int capacity){
+    /* KAMUS LOKAL */
+
+    /* ALGORITMA */
     (*Stack).buffer = (char**) malloc (capacity * sizeof(char*));
     (*Stack).top = -1;
 }
 
 void createPoint(point *P, int X, int Y){
+    /* KAMUS LOKAL */
+
+    /* ALGORITMA */
     (*P).X = X;
     (*P).Y = Y;
 }
 
 void createPointArray(pointArray *Arr, int length){
+    /* KAMUS LOKAL */
+
+    /* ALGORITMA */
     (*Arr).buffer = (point*) malloc (length * sizeof(point));
     (*Arr).nEff = 0;
     (*Arr).maxLen = length;
 }
 
 void insertLastStrArr(strArray *Arr, char *str){
+    /* KAMUS LOKAL */
+
+    /* ALGORITMA */
     if ((*Arr).nEff == (*Arr).maxLen){
         printf("Array penuh!\n");
     } else {
@@ -52,18 +72,38 @@ void insertLastStrArr(strArray *Arr, char *str){
     }
 }
 
+void insertLastPointArr(pointArray *Arr, int X, int Y){
+    /* KAMUS LOKAL */
+
+    /* ALGORITMA */
+    if ((*Arr).nEff < (*Arr).maxLen){
+        (*Arr).buffer[(*Arr).nEff].X = X;
+        (*Arr).buffer[(*Arr).nEff].Y = Y;
+        (*Arr).nEff++;
+    }
+}
+
 void push(strStack *Stack, char *str){
+    /* KAMUS LOKAL */
+
+    /* ALGORITMA */
     (*Stack).top++;
     (*Stack).buffer[(*Stack).top] = (char*) malloc (100 * sizeof(char));
     strcpy((*Stack).buffer[(*Stack).top], str);
 }
 
 void pop(strStack *Stack, char *str){
+    /* KAMUS LOKAL */
+
+    /* ALGORITMA */
     (*Stack).top--;
 }
 
 void displayArray(strArray Arr){
+    /* KAMUS LOKAL */
     int i;
+
+    /* ALGORITMA */
     for (i = 0; i < Arr.nEff; i++){
         printf("%s ", Arr.buffer[i]);
     }
@@ -71,7 +111,10 @@ void displayArray(strArray Arr){
 }
 
 void displayMatrix(strMatrix Mat){
+    /* KAMUS LOKAL */
     int i, j;
+
+    /* ALGORITMA */
     for (i = 0; i < Mat.row; i++){
         for (j = 0; j < Mat.col; j++){
             printf("%s ", Mat.buffer[i].buffer[j]);
@@ -81,7 +124,10 @@ void displayMatrix(strMatrix Mat){
 }
 
 void displaySeqAndReward(strMatrix Mat, intArray Seq, intArray Reward){
+    /* KAMUS LOKAL */
     int i, j;
+
+    /* ALGORITMA */
     for (i = 0; i < Mat.row; i++){
         printf("Sequence %d: ", i + 1);
         for (j = 0; j < Seq.buffer[i]; j++){
@@ -91,98 +137,64 @@ void displaySeqAndReward(strMatrix Mat, intArray Seq, intArray Reward){
     }
 }
 
-/* --- Program Utama --- */
-int main(){
-    int i, j, k, bufferSize, mtxHeight, mtxWidth, cntSeq, option, cntToken, maxSeqSize, randomInt, reward, tempSeqLength;
-    intArray seqSize, seqReward;
-    strArray seqArray, tempRow;
-    strMatrix sequences, tokenMatrix;
-    char Word[100];
-    boolean valid;
+boolean isInStrArray(strArray Arr, char *Str){
+    /* KAMUS LOKAL */
+    int i;
+    boolean isIn;
 
-    printf("Cyberpunk 2077 Breach Protocol Solver with Brute Force Algorithm\n\n");
-    printf("Apakah Anda ingin memasukkan matrix dan sequence dari file atau dari CLI?\n");
-    printf("1. File\n");
-    printf("2. CLI\n");
-    
-
-    // Validasi masukan
-    valid = false;
-    while (!valid){
-        printf("Silakan masukkan nomor pilihan Anda!\n"); 
-        printf(">> "); scanf("%d", &option);
-        if (option == 1 || option == 2){
-            valid = true;
-        } else {
-            printf("Masukan tidak valid!\n");
+    /* ALGORITMA */
+    i = 0;
+    isIn = false;
+    while ((i < Arr.nEff) && (!isIn)){
+        if (strcmp(Arr.buffer[i], Str) == 0){
+            isIn = true;
         }
+        i++;
     }
+    return isIn;
+}
 
-    if (option == 1){ //  Jika input dari file
-        printf("Masukan Anda adalah dari file\n");
-        // something
+boolean isSequenceDup(strMatrix Mat, intArray Seq, strArray temp, int tempLen, int curr){
+    /* KAMUS LOKAL */
+    int i, j;
+    boolean duplicate;
 
-    } else { //  Jika input dari CLI (setelah validasi, hanya mungkin option == 2)
-        printf("Masukan Anda adalah dari CLI\n");
-        printf("Masukkan banyaknya token unik yang ingin dijadikan matrix sequence\n");
-        printf(">> "); scanf("%d", &cntToken);
-        
-        // membuat array untuk menyimpan token unik
-        createStringArray(&seqArray, cntToken);
-
-        // menerima input dari user
-        printf("Masukkan token unik yang ingin dijadikan matrix sequence\n");
-        for (i = 0; i < cntToken; i++){
-            scanf("%s", Word);
-            insertLastStrArr(&seqArray, Word);
-        }
-
-        printf("Masukkan ukuran buffer yang diinginkan\n");
-        printf(">> "); scanf("%d", &bufferSize);
-
-        printf("Masukkan ukuran matrix sequence yang diinginkan\n");
-        printf(">> "); scanf("%d %d", &mtxHeight, &mtxWidth);
-
-        printf("Masukkan banyaknya sequence yang diinginkan\n");
-        printf(">> "); scanf("%d", &cntSeq);
-
-        printf("Masukkan ukuran maksimal sequence yang diinginkan\n");
-        printf(">> "); scanf("%d", &maxSeqSize);
-
-        // membuat matrix random
-        createStringMatrix(&tokenMatrix, mtxHeight, mtxWidth);
-        srand(time(NULL));
-        for (i = 0; i < mtxHeight; i++){
-            for (j = 0; j < mtxWidth; j++){
-                randomInt = rand() % cntToken;
-                tokenMatrix.buffer[i].buffer[j] = seqArray.buffer[randomInt];
+    /* ALGORITMA */
+    i = 0;
+    duplicate = false;
+    while ((i < curr) && (!duplicate)){
+        if (Seq.buffer[i] == tempLen){
+            j = 0;
+            duplicate = true;
+            while ((j < tempLen) && (duplicate)){
+                if (strcmp(Mat.buffer[i].buffer[j], temp.buffer[j]) == 0){
+                    duplicate = true;
+                } else {
+                    duplicate = false;
+                }
+                j++;
             }
         }
-        displayMatrix(tokenMatrix);
-
-        // membuat random sequence
-        createStringMatrix(&sequences, cntSeq, maxSeqSize + 2);
-        createIntArray(&seqSize, cntSeq);
-        createIntArray(&seqReward, cntSeq);
-        for (i = 0; i < cntSeq; i++){
-            tempSeqLength = (rand() % maxSeqSize) + 1;
-            seqSize.buffer[i] = tempSeqLength;
-            for (j = 0; j < tempSeqLength; j++){
-                randomInt = rand() % cntToken;
-                sequences.buffer[i].buffer[j] = seqArray.buffer[randomInt];
-            }
-            randomInt = ((rand() % 10) + 1) * 5; // hadiah sequence random berupa integer kelipatan 5 pada range 5 - 50
-            reward = randomInt;
-            randomInt = rand() % 2;
-            if (randomInt == 1){ // jika randomInt == 1, maka reward sequence negatif
-                reward = -reward;
-            }
-            seqReward.buffer[i] = reward;
-        }
-        displaySeqAndReward(sequences, seqSize, seqReward);
+        i++;
     }
+    return duplicate;
+}
 
-    return 0;
+boolean isInPointArray(pointArray Arr, int X, int Y){
+    /* KAMUS LOKAL */
+    int i;
+
+    /* ALGORITMA */
+    if (Arr.nEff == 0){
+        return false;
+    } else {
+        for (i = 0; i < Arr.nEff; i++){
+            if ((Arr.buffer[i].X == X) && (Arr.buffer[i].Y) == Y){
+                return true;
+            }
+        }
+        return false;
+    }
 }
 
 /* --- Dummy Driver --- */
