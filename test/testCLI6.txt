@@ -1,3 +1,5 @@
-Tidak ada solusi!
+40
+AA 
+2, 1
 
 0.000000 ms

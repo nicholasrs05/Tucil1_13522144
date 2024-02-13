@@ -1,10 +1,3 @@
-50
-CC CC EE DD FF BB 
-5, 1
-5, 2
-1, 2
-1, 1
-2, 1
-2, 2
+Tidak ada solusi!
 
-0.000000 ms
+1.000000 ms

@@ -271,6 +271,7 @@ int main(){
 
     // algoritma brute force untuk mencari solusi optimal
     currReward = 0;
+    maxReward = 0;
     createStringArray(&bufferSolution, bufferSize);
     createPointArray(&solutionCoordinate, bufferSize);
     for (i = 0; i < tokenMatrix.col; i++){
@@ -278,7 +279,11 @@ int main(){
         solutionCoordinate.buffer[0].Y = i;
         solutionCoordinate.nEff = 1;
         currReward = addReward(sequences, seqSize, seqReward, solutionCoordinate, tokenMatrix);
-        maxReward = currReward;
+        if (currReward > maxReward){
+            createPointArray(&maxArr, bufferSize);
+            maxReward = currReward;
+            copyPointArray(solutionCoordinate, &maxArr);
+        }
         recursiveTraverse(sequences, seqSize, seqReward, &solutionCoordinate, tokenMatrix, &maxReward, &maxArr, 0, i, true);
     }
 
