@@ -32,7 +32,7 @@ typedef struct{
     int Y;
 } point;
 
-/* Definisi tipe data array of point */
+/* Definisi tipe data dynamic array of point */
 typedef struct{
     point *buffer;
     int nEff;

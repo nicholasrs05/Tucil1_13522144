@@ -1,17 +1,18 @@
 #include <time.h>
+#include <unistd.h>
 #include "cyberpunkhack.c"
 
 /* --- Program Utama --- */
 int main(){
     /* KAMUS */
-    int i, j, k, bufferSize, mtxHeight, mtxWidth, cntSeq, option, cntToken, maxSeqSize, randomInt, reward, tempSeqLength, maxReward, currReward, maxPossible;
+    int i, j, k, bufferSize, mtxHeight, mtxWidth, cntSeq, option, cntToken, maxSeqSize, randomInt, reward, tempSeqLength, maxReward, currReward, maxPossible, nlIdx;
     char Word[100], fileName[200], line[100], filePath[200];
     char *token;
     intArray seqSize, seqReward;
     strArray seqArray, bufferSolution;
     strMatrix sequences, tokenMatrix;
     pointArray solutionCoordinate, maxArr;
-    boolean valid;
+    boolean valid, fileCheck;
     clock_t start, end;
     double interval;
     FILE *filePointer;
@@ -40,7 +41,7 @@ int main(){
         // input nama file
         valid = false;
         while (!valid){
-            printf("Silakan masukkan nama file yang ingin Anda buka (maksimal 200 karakter)\n");
+            printf("Silakan masukkan nama file yang ingin Anda buka (maksimal 200 karakter, jangan lupa tambahkan .txt pada akhir nama file)\n");
             printf(">> "); scanf("%199s", fileName);
             
             sprintf(filePath, "../test/%s", fileName);
@@ -54,33 +55,79 @@ int main(){
 
         // membaca input dari file
         fscanf(filePointer, "%d", &bufferSize);
+        if (bufferSize <= 0){
+            printf("Ukuran buffer tidak valid.\n");
+            printf("Program akan dihentikan dalam 5 detik, silakan perbaiki file input.\n");
+            sleep(5);
+            return 0;
+        }
 
         fscanf(filePointer, "%d %d", &mtxHeight, &mtxWidth);
+        if ((mtxHeight <= 0) || (mtxWidth <= 0)){
+            printf("Ukuran matrix tidak valid.\n");
+            printf("Program akan dihentikan dalam 5 detik, silakan perbaiki file input.\n");
+            sleep(5);
+            return 0;
+        }
 
         createStringMatrix(&tokenMatrix, mtxHeight, mtxWidth);
         for (i = 0; i < mtxHeight; i++){
             for (j = 0; j < mtxWidth; j++){
                 fscanf(filePointer, "%s", Word);
+                if (strlen(Word) != 2){
+                    printf("Panjang token harus 2.\n");
+                    printf("Kesalahan ada pada baris %d kolom %d -> %s\n", i + 1, j + 1, Word);
+                    printf("Program akan dihentikan dalam 5 detik, silakan perbaiki file input.\n");
+                    sleep(5);
+                    return 0;
+                }
                 tokenMatrix.buffer[i].buffer[j] = strdup(Word);
             }
         }
 
         fscanf(filePointer, "%d", &cntSeq);
+        if (cntSeq <= 0){
+            printf("Banyaknya sequence tidak valid.\n");
+            printf("Program akan dihentikan dalam 5 detik, silakan perbaiki file input.\n");
+            sleep(5);
+            return 0;
+        }
 
         createStringMatrix(&sequences, cntSeq, mtxWidth);
         createIntArray(&seqSize, cntSeq);
         createIntArray(&seqReward, cntSeq);
         for (i = 0; i < cntSeq; i++){
-            fgets(line, sizeof(line), filePointer);
-            token = strtok(line, " \t\n");
+            do {
+                fgets(line, sizeof(line), filePointer);
+            } while (strcmp(line, "\n") == 0);
+
+            token = strtok(line, " ");
             j = 0;
             while (token != NULL) {
+                nlIdx = strcspn(token, "\n");
+                if (token[nlIdx] == '\n'){
+                    token[nlIdx] = '\0';
+                }
+                if (strlen(token) != 2){
+                    printf("Panjang token harus 2.\n");
+                    printf("Kesalahan ada pada baris %d -> %s\n", i + 1, token);
+                    printf("Program akan dihentikan dalam 5 detik, silakan perbaiki file input.\n");
+                    sleep(5);
+                    return 0;
+                }
                 sequences.buffer[i].buffer[j] = strdup(token);
                 j++;
-                token = strtok(NULL, " \t\n");
+                token = strtok(NULL, " ");
             }
             seqSize.buffer[i] = j;
-            fscanf(filePointer, "%d", &seqReward.buffer[i]);
+            if (fscanf(filePointer, "%d", &seqReward.buffer[i]) == 1){
+                fscanf(filePointer, "%d", &seqReward.buffer[i]);
+            } else {
+                printf("Reward sequence ke-%d tidak valid.\n", i + 1);
+                printf("Program akan dihentikan dalam 5 detik, silakan perbaiki file input.\n");
+                sleep(5);
+                return 0;
+            }
         }
 
         fclose(filePointer);
@@ -94,8 +141,17 @@ int main(){
 
     } else { //  Jika input dari CLI (setelah validasi, hanya mungkin option == 2)
         printf("Masukan Anda adalah dari CLI\n");
-        printf("Masukkan banyaknya token unik yang ingin dijadikan matrix sequence\n");
-        printf(">> "); scanf("%d", &cntToken);
+
+        valid = false;
+        while (!valid){ // validasi banyaknya token unik (harus lebih dari 0)
+            printf("Masukkan banyaknya token unik yang ingin dijadikan matrix sequence\n");
+            printf(">> "); scanf("%d", &cntToken);
+            if (cntToken > 0){
+                valid = true;
+            } else {
+                printf("Banyaknya token unik harus lebih dari 0!\n");
+            }
+        }
         
         // membuat array untuk menyimpan token unik
         createStringArray(&seqArray, cntToken);
@@ -110,20 +166,58 @@ int main(){
                     scanf("%s", Word);
                 } while (isInStrArray(seqArray, Word));
             }
+            if (strlen(Word) != 2){
+                do {
+                    printf("Panjang token harus 2! Silakan masukkan ulang token!\n");
+                    scanf("%s", Word);
+                } while (strlen(Word) != 2);
+            }
             insertLastStrArr(&seqArray, Word);
         }
 
-        printf("Masukkan ukuran buffer yang diinginkan\n");
-        printf(">> "); scanf("%d", &bufferSize);
+        valid = false;
+        while (!valid){
+            printf("Masukkan ukuran buffer yang diinginkan\n");
+            printf(">> "); scanf("%d", &bufferSize);
+            if (bufferSize > 0){
+                valid = true;
+            } else {
+                printf("Ukuran buffer harus lebih dari 0!\n");
+            }
+        }
 
-        printf("Masukkan ukuran matrix sequence yang diinginkan\n");
-        printf(">> "); scanf("%d %d", &mtxHeight, &mtxWidth);
+        valid = false;
+        while (!valid){
+            printf("Masukkan ukuran matrix sequence yang diinginkan\n");
+            printf(">> "); scanf("%d %d", &mtxHeight, &mtxWidth);
+            if ((mtxHeight > 0) && (mtxWidth > 0)){
+                valid = true;
+            } else {
+                printf("Ukuran matrix harus lebih dari 0!\n");
+            }
+        }
 
-        printf("Masukkan banyaknya sequence yang diinginkan\n");
-        printf(">> "); scanf("%d", &cntSeq);
+        valid = false;
+        while (!valid){
+            printf("Masukkan banyaknya sequence yang diinginkan\n");
+            printf(">> "); scanf("%d", &cntSeq);
+            if (cntSeq > 0){
+                valid = true;
+            } else {
+                printf("Banyaknya sequence harus lebih dari 0!\n");
+            }
+        }
 
-        printf("Masukkan ukuran maksimal sequence yang diinginkan\n");
-        printf(">> "); scanf("%d", &maxSeqSize);
+        valid = false;
+        while (!valid){
+            printf("Masukkan ukuran maksimal sequence yang diinginkan\n");
+            printf(">> "); scanf("%d", &maxSeqSize);
+            if (maxSeqSize > 0){
+                valid = true;
+            } else {
+                printf("Ukuran maksimal sequence harus lebih dari 0!\n");
+            }
+        }
 
         // membuat matrix random
         createStringMatrix(&tokenMatrix, mtxHeight, mtxWidth);
@@ -193,6 +287,7 @@ int main(){
     interval = ((double)(end - start) / CLOCKS_PER_SEC) * 1000;
 
     if (maxReward <= 0){
+        maxReward = 0;
         printf("Tidak ada solusi!\n");
     } else {
         printf("%d\n", maxReward);
@@ -211,6 +306,7 @@ int main(){
     printf("Apakah Anda ingin menyimpan solusi ke dalam file .txt?\n");
     printf("1. Ya\n");
     printf("2. Tidak\n");
+    
     // Validasi masukan
     valid = false;
     while (!valid){
@@ -223,22 +319,27 @@ int main(){
         }
     }
     if (option == 1){
-        printf("Masukkan nama file yang diinginkan (maksimal 200 karakter)\n");
+        printf("Masukkan nama file yang diinginkan (maksimal 200 karakter, jangan lupa tambahkan .txt pada akhir nama file)\n");
         printf(">> "); scanf("%199s", fileName);
 
         sprintf(filePath, "../test/%s", fileName);
         filePointer = fopen(filePath, "w");
-        fprintf(filePointer, "%d\n", maxReward);
+        
+        if (maxReward > 0){
+            fprintf(filePointer, "%d\n", maxReward);
+            for (i = 0; i < maxArr.nEff; i++){
+                fprintf(filePointer, "%s ", tokenMatrix.buffer[maxArr.buffer[i].X].buffer[maxArr.buffer[i].Y]);
+            }
 
-        for (i = 0; i < maxArr.nEff; i++){
-            fprintf(filePointer, "%s ", tokenMatrix.buffer[maxArr.buffer[i].X].buffer[maxArr.buffer[i].Y]);
+            fprintf(filePointer, "\n");
+
+            for (i = 0; i < maxArr.nEff; i++){
+                fprintf(filePointer, "%d, %d\n", maxArr.buffer[i].Y + 1, maxArr.buffer[i].X + 1);
+            }
+        } else {
+            fprintf(filePointer, "Tidak ada solusi!\n");
         }
 
-        fprintf(filePointer, "\n");
-
-        for (i = 0; i < maxArr.nEff; i++){
-            fprintf(filePointer, "%d, %d\n", maxArr.buffer[i].Y + 1, maxArr.buffer[i].X + 1);
-        }
 
         fprintf(filePointer, "\n");
         fprintf(filePointer, "%f ms\n", interval);

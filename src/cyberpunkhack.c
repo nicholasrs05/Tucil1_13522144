@@ -208,7 +208,7 @@ int addReward(strMatrix Mat, intArray Seq, intArray Reward, pointArray Arr, strM
             for (j = 0; j < (Arr.nEff - Seq.buffer[i]) + 1; j++){ // loop sequence untuk menemukan kesamaan
                 equal = false;
                 for (k = 0; k < Seq.buffer[i]; k++){ // menyamakan tiap elemen
-                    if (tokenMat.buffer[Arr.buffer[j + k].X].buffer[Arr.buffer[j + k].Y] == Mat.buffer[i].buffer[k]){
+                    if (strcmp(tokenMat.buffer[Arr.buffer[j + k].X].buffer[Arr.buffer[j + k].Y], Mat.buffer[i].buffer[k]) == 0){
                         equal = true;
                     } else {
                         equal = false;
@@ -230,40 +230,34 @@ void recursiveTraverse(strMatrix seqMat, intArray Seq, intArray Reward, pointArr
     int currReward, i;
 
     /* ALGORITMA */
-    if ((*Arr).nEff == (*Arr).maxLen){ // Basis
-        currReward = addReward(seqMat, Seq, Reward, *Arr, tokenMat);
-        if (currReward > *maxReward){
-            // printf("Rute saat ini: "); displayPointArray(*Arr);
-            // printf("Solusi baru dengan reward %d\n", currReward);
+    if ((*Arr).nEff == (*Arr).maxLen){ // Basis (buffer penuh)
+        currReward = addReward(seqMat, Seq, Reward, *Arr, tokenMat); // hitung reward saat ini
+        if (currReward > *maxReward){ // jika reward saat ini lebih besar dari reward maksimum, update reward maksimum
             *maxReward = currReward;
             copyPointArray(*Arr, maxArr);
         }
     } else { // Rekurens
-        if (vertical){
-            for (i = 0; i < tokenMat.row; i++){
+        if (vertical){ // Jika jalur saat ini vertikal
+            for (i = 0; i < tokenMat.row; i++){ // traverse semua jalur vertikal yang belum dijalani
                 if (!isInPointArray(*Arr, i, currY)){
                     insertLastPointArr(Arr, i, currY);
-                    if (addReward(seqMat, Seq, Reward, *Arr, tokenMat) > *maxReward){
-                        // printf("Rute saat ini: "); displayPointArray(*Arr);
-                        // printf("Rute ini rewardnya %d\n", addReward(seqMat, Seq, Reward, *Arr, tokenMat));
+                    if (addReward(seqMat, Seq, Reward, *Arr, tokenMat) > *maxReward){ // jika reward jalur ini lebih besar dari reward maksimum, update reward maksimum
                         *maxReward = addReward(seqMat, Seq, Reward, *Arr, tokenMat);
                         copyPointArray(*Arr, maxArr);
                     }
-                    recursiveTraverse(seqMat, Seq, Reward, Arr, tokenMat, maxReward, maxArr, i, currY, !vertical);
+                    recursiveTraverse(seqMat, Seq, Reward, Arr, tokenMat, maxReward, maxArr, i, currY, !vertical); // rekursi (kali ini horizontal)
                     (*Arr).nEff--;
                 }
             }
-        } else {
-            for (i = 0; i < tokenMat.col; i++){
+        } else { // Jika jalur saat ini horizontal
+            for (i = 0; i < tokenMat.col; i++){ // traverse semua jalur horizontal yang belum dijalani
                 if (!isInPointArray(*Arr, currX, i)){
                     insertLastPointArr(Arr, currX, i);
-                    if (addReward(seqMat, Seq, Reward, *Arr, tokenMat) > *maxReward){
-                        // printf("Rute saat ini: "); displayPointArray(*Arr);
-                        // printf("Rute ini rewardnya %d\n", addReward(seqMat, Seq, Reward, *Arr, tokenMat));
+                    if (addReward(seqMat, Seq, Reward, *Arr, tokenMat) > *maxReward){ // jika reward jalur ini lebih besar dari reward maksimum, update reward maksimum
                         *maxReward = addReward(seqMat, Seq, Reward, *Arr, tokenMat);
                         copyPointArray(*Arr, maxArr);
                     }
-                    recursiveTraverse(seqMat, Seq, Reward, Arr, tokenMat, maxReward, maxArr, currX, i, !vertical);
+                    recursiveTraverse(seqMat, Seq, Reward, Arr, tokenMat, maxReward, maxArr, currX, i, !vertical); // rekursi (kali ini vertikal)
                     (*Arr).nEff--;
                 }
             }
